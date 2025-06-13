@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz - Museu da Abolição</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .quiz-container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      max-width: 700px;
+      width: 100%;
+    }
+    .question {
+      font-size: 1.2em;
+      margin-bottom: 20px;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      background-color: #ececec;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .options button:hover {
+      background-color: #dcdcdc;
+    }
+    .score {
+      font-size: 1.2em;
+      text-align: center;
+      margin-top: 20px;
+    }
+    .next-button, .restart-button, .theme-button {
+      margin-top: 20px;
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .details {
+      font-size: 0.95em;
+      margin-top: 20px;
+    }
+    .dark-theme {
+      background-color: #121212;
+      color: white;
+    }
+    .dark-theme .quiz-container {
+      background-color: #1f1f1f;
+    }
+    .dark-theme .options button {
+      background-color: #333;
+      color: white;
+    }
+    .dark-theme .options button:hover {
+      background-color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <div class="question" id="question"></div>
+    <div class="options" id="options"></div>
+    <button class="next-button" id="nextBtn" style="display:none">Próxima</button>
+    <div class="score" id="score"></div>
+    <div class="details" id="details"></div>
+    <button class="restart-button" id="restartBtn" style="display:none">Jogar Novamente</button>
+    <button class="theme-button" id="themeBtn">Alternar Tema</button>
+  </div>
+
+  <script>
+    const quiz = [
+      { pergunta: "Em que cidade e estado está localizado o Museu da Abolição?", opcoes: ["Salvador, Bahia", "Recife, Pernambuco", "São Luís, Maranhão", "Belo Horizonte, Minas Gerais"], respostaCorreta: "Recife, Pernambuco" },
+      { pergunta: "Qual foi o ano de criação oficial do Museu da Abolição?", opcoes: ["1888", "1957", "1983", "1992"], respostaCorreta: "1957" },
+      { pergunta: "Quando o Museu da Abolição foi efetivamente instalado?", opcoes: ["1957", "1964", "1983", "2000"], respostaCorreta: "1983" },
+      { pergunta: "O prédio do museu pertenceu a qual figura histórica?", opcoes: ["Zumbi dos Palmares", "Princesa Isabel", "Comendador André de Figueiredo Carneiro Leão", "José Bonifácio"], respostaCorreta: "Comendador André de Figueiredo Carneiro Leão" },
+      { pergunta: "Qual órgão é responsável atualmente pela administração do museu?", opcoes: ["IPHAN", "Ministério da Educação", "Instituto Brasileiro de Museus (IBRAM)", "Fundação Palmares"], respostaCorreta: "Instituto Brasileiro de Museus (IBRAM)" },
+      { pergunta: "Qual é o principal foco temático do Museu da Abolição?", opcoes: ["História da arte", "Cultura indígena", "Escravidão, abolição e resistência negra", "Modernismo brasileiro"], respostaCorreta: "Escravidão, abolição e resistência negra" },
+      { pergunta: "Que tipo de acervo o museu possui?", opcoes: ["Apenas esculturas e pinturas modernas", "Objetos da escravidão, documentos e obras de arte", "Armas coloniais", "Relíquias indígenas do século XIX"], respostaCorreta: "Objetos da escravidão, documentos e obras de arte" },
+      { pergunta: "Além de exposições, que tipo de atividades o museu realiza?", opcoes: ["Cultos religiosos", "Aulas de culinária", "Eventos culturais, oficinas e debates", "Feiras de artesanato"], respostaCorreta: "Eventos culturais, oficinas e debates" },
+      { pergunta: "Qual dessas datas é especialmente lembrada no museu?", opcoes: ["25 de dezembro", "13 de maio", "7 de setembro", "21 de abril"], respostaCorreta: "13 de maio" },
+      { pergunta: "O museu também é conhecido como um espaço de:", opcoes: ["Turismo religioso", "Negócios internacionais", "Resistência e reflexão antirracista", "Moda e design"], respostaCorreta: "Resistência e reflexão antirracista" }
+    ];
+
+    let indiceAtual = 0;
+    let pontuacao = 0;
+    let respostasDetalhadas = [];
+
+    const questionEl = document.getElementById('question');
+    const optionsEl = document.getElementById('options');
+    const nextBtn = document.getElementById('nextBtn');
+    const scoreEl = document.getElementById('score');
+    const detailsEl = document.getElementById('details');
+    const restartBtn = document.getElementById('restartBtn');
+    const themeBtn = document.getElementById('themeBtn');
+
+    function mostrarQuestao() {
+      const atual = quiz[indiceAtual];
+      questionEl.textContent = atual.pergunta;
+      optionsEl.innerHTML = '';
+      atual.opcoes.forEach(opcao => {
+        const btn = document.createElement('button');
+        btn.textContent = opcao;
+        btn.onclick = () => verificarResposta(opcao);
+        optionsEl.appendChild(btn);
+      });
+      nextBtn.style.display = 'none';
+      detailsEl.innerHTML = '';
+    }
+
+    function verificarResposta(opcaoSelecionada) {
+      const correta = quiz[indiceAtual].respostaCorreta;
+      if (opcaoSelecionada === correta) pontuacao++;
+      respostasDetalhadas.push({
+        pergunta: quiz[indiceAtual].pergunta,
+        respostaUsuario: opcaoSelecionada,
+        correta: correta
+      });
+      const botoes = optionsEl.querySelectorAll('button');
+      botoes.forEach(btn => {
+        btn.disabled = true;
+        if (btn.textContent === correta) btn.style.backgroundColor = '#a0e8af';
+        else if (btn.textContent === opcaoSelecionada) btn.style.backgroundColor = '#f7a6a6';
+      });
+      nextBtn.style.display = 'inline-block';
+    }
+
+    nextBtn.onclick = () => {
+      indiceAtual++;
+      if (indiceAtual < quiz.length) mostrarQuestao();
+      else mostrarPontuacao();
+    };
+
+    function mostrarPontuacao() {
+      questionEl.textContent = 'Quiz finalizado!';
+      optionsEl.innerHTML = '';
+      nextBtn.style.display = 'none';
+      restartBtn.style.display = 'inline-block';
+      scoreEl.textContent = `Você acertou ${pontuacao} de ${quiz.length} perguntas.`;
+
+      let detalhesHTML = '<h3>Resumo:</h3><ul>';
+      respostasDetalhadas.forEach((item, i) => {
+        detalhesHTML += `<li><strong>${i + 1}.</strong> ${item.pergunta}<br> Sua resposta: <em>${item.respostaUsuario}</em> ${item.respostaUsuario === item.correta ? '✅' : `❌ (Correta: ${item.correta})`}</li>`;
+      });
+      detalhesHTML += '</ul>';
+      detailsEl.innerHTML = detalhesHTML;
+    }
+
+    restartBtn.onclick = () => {
+      indiceAtual = 0;
+      pontuacao = 0;
+      respostasDetalhadas = [];
+      scoreEl.textContent = '';
+      restartBtn.style.display = 'none';
+      mostrarQuestao();
+    };
+
+    themeBtn.onclick = () => {
+      document.body.classList.toggle('dark-theme');
+    };
+
+    mostrarQuestao();
+  </script>
+</body>
+</html>
